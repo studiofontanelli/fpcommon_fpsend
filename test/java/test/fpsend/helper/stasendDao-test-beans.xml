@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+       http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.1.xsd
+       http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.0.xsd">
+	
+	
+	<!-- 
+	<import resource="stagecasyncDaoCustom-test-beans.xml" />
+	 -->
+	 
+	 
+	 <!-- SEQUENCE -->
+	 
+	
+	 <bean id="sendTRichiestaDaoIncrementer"
+		class="org.springframework.jdbc.support.incrementer.PostgreSQLSequenceMaxValueIncrementer">
+		<constructor-arg>
+			<ref bean="myDataSource" />
+		</constructor-arg>
+		<constructor-arg>
+			<value>send_t_richiesta_id_richiesta_seq</value>
+		</constructor-arg>
+	</bean>
+	
+	 <bean id="sendTMessaggioDaoIncrementer"
+		class="org.springframework.jdbc.support.incrementer.PostgreSQLSequenceMaxValueIncrementer">
+		<constructor-arg>
+			<ref bean="myDataSource" />
+		</constructor-arg>
+		<constructor-arg>
+			<value>send_t_messaggio_id_messaggio_seq</value>
+		</constructor-arg>
+	</bean>
+	
+	
+	<bean id="sendTRichiestaDao" class="it.csi.stacore.stasend.business.dao.stasend.dao.impl.SendTRichiestaDaoImpl">
+    	<property name="jdbcTemplate" ref="namedJdbcTemplate" />
+    	
+  	</bean>
+  	
+  	
+	<bean id="sendTFruitoreDao" class="it.csi.stacore.stasend.business.dao.stasend.dao.impl.SendTFruitoreDaoImpl">
+    	<property name="jdbcTemplate" ref="namedJdbcTemplate" />
+    	
+  	</bean>
+  	
+  	
+	<bean id="sendRFruitoreCanaleDao" class="it.csi.stacore.stasend.business.dao.stasend.dao.impl.SendRFruitoreCanaleDaoImpl">
+    	<property name="jdbcTemplate" ref="namedJdbcTemplate" />
+    	
+  	</bean>
+  	
+  	
+	<bean id="sendTMessaggioDao" class="it.csi.stacore.stasend.business.dao.stasend.dao.impl.SendTMessaggioDaoImpl">
+    	<property name="jdbcTemplate" ref="namedJdbcTemplate" />
+    	
+  	</bean>
+  	
+  	<bean id="sendDTipoCanaleDao" class="it.csi.stacore.stasend.business.dao.stasend.dao.impl.SendDTipoCanaleDaoImpl">
+    	<property name="jdbcTemplate" ref="namedJdbcTemplate" />
+    	
+  	</bean>
+  	
+  	<bean id="sendTTemplateDao" class="it.csi.stacore.stasend.business.dao.stasend.dao.impl.SendTTemplateDaoImpl">
+    	<property name="jdbcTemplate" ref="namedJdbcTemplate" />
+    	
+  	</bean>
+
+</beans>
+

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+       					   http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-1.1.xsd"> 
+       					   
+
+	<!-- Interceptor -->
+
+	<bean id="logInterceptor"   class="it.csi.stacore.stasend.business.stasend.interceptor.LogInterceptor"/>
+	<bean id="paramInterceptor" class="it.csi.stacore.stasend.business.stasend.interceptor.ParamInterceptor"/>
+	
+	<bean id="messageSenderHelperTarget" class="it.csi.stacore.stasend.business.stasend.helper.impl.MessageSenderHelperImpl">			
+		<property name="sendTFruitoreDao"                ref="sendTFruitoreDao" />
+		<property name="sendRFruitoreCanaleDao"          ref="sendRFruitoreCanaleDao" />
+		<property name="sendDTipoCanaleDao"              ref="sendDTipoCanaleDao" />
+		<property name="sendTRichiestaDao"               ref="sendTRichiestaDao" />
+		<property name="sendTMessaggioDao"               ref="sendTMessaggioDao" />
+		<property name="sendTRichiestaDaoIncrementer"    ref="sendTRichiestaDaoIncrementer" />
+		<property name="messageProcessingHelper"         ref="messageProcessingHelper" />
+		
+		
+		
+	</bean>
+	
+	<bean id="messageSenderHelper" class="org.springframework.aop.framework.ProxyFactoryBean">
+		<property name="proxyInterfaces" value="it.csi.stacore.stasend.business.stasend.helper.MessageSenderHelper"/>
+		<property name="target" ref="messageSenderHelperTarget"/>
+		<property name="interceptorNames">
+			<list>
+				<value>logInterceptor</value>
+				<value>paramInterceptor</value>
+			</list>
+		</property>
+	</bean>
+	
+	
+	
+	<bean id="messageProcessingHelperTarget" class="it.csi.stacore.stasend.business.stasend.helper.impl.MessageProcessingHelperImpl">			
+		<property name="sendTRichiestaDao"               ref="sendTRichiestaDao" />
+		<property name="sendTMessaggioDao"               ref="sendTMessaggioDao" />
+		<property name="sendTTemplateDao"                ref="sendTTemplateDao" />
+		<property name="sendTRichiestaDaoIncrementer"    ref="sendTRichiestaDaoIncrementer" />
+		<property name="sendTMessaggioDaoIncrementer"    ref="sendTMessaggioDaoIncrementer" />
+		
+		<property name="commands">
+			<map>
+				<entry key="EMAIL"            value="emailMessageProvider" />
+				<entry key="SMS"              value="smsMessageProvider" /> 
+				<entry key="MOCK_EMAIL"       value="mockEmailMessageProvider" /> 
+				<entry key="MOCK_SMS"         value="mockSmsMessageProvider" /> 
+			</map>
+    	</property>
+		
+		
+		
+	</bean>
+	
+	<bean id="messageProcessingHelper" class="org.springframework.aop.framework.ProxyFactoryBean">
+		<property name="proxyInterfaces" value="it.csi.stacore.stasend.business.stasend.helper.MessageProcessingHelper"/>
+		<property name="target" ref="messageProcessingHelperTarget"/>
+		<property name="interceptorNames">
+			<list>
+				<value>logInterceptor</value>
+				<value>paramInterceptor</value>
+			</list>
+		</property>
+	</bean>
+	
+	
+	
+	
+</beans>

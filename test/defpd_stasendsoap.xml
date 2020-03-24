@@ -1,0 +1,45 @@
+<porta-delegata name="stasend.stasend">
+  <services>
+  
+<service name="stasend" public-interface-class="it.csi.stacore.stasend.interfacecsi.stasend.StasendSrv" top-version="1.0.0">
+      <operations>
+		<operation name="sendMessage" type="asynch-call" since="1.0">
+          <param-list>
+			<param name="requestMessage" type="it.csi.stacore.stasend.dto.stasend.RequestMessage" />
+          <param name="datiMsg" type="it.csi.csi.util.DatiMessaggio" />
+          </param-list>
+          	<ret-val type="java.lang.String"/>
+        </operation>
+		<operation name="sendMessages" type="asynch-call" since="1.0">
+          <param-list>
+			<param name="requestMessages" type="it.csi.stacore.stasend.dto.stasend.RequestMessages" />
+          <param name="datiMsg" type="it.csi.csi.util.DatiMessaggio" />
+          </param-list>
+          	<ret-val type="java.lang.String"/>
+        </operation>
+      </operations>
+    </service>
+
+  </services>
+  <config>
+    <url-pa>**not used**</url-pa>
+    <pluggable-pd-list chooser-class="it.csi.csi.porte.FixedDelegateChooser">
+      <pluggable-pd
+        name="stasend"
+        class="it.csi.csi.porte.soap.apache.PortaDelegataSoap"
+        url-pa="@stacore.stasend.stasend.pa.url@/stasendApplStasendPabr/servlet/rpcrouter" 
+	
+		              
+        url-qm="@stacore.stasend.stasend.pa.url@/stasendApplStasendPabr/servlet/rpcrouter;urn:QMBR_stasend">
+        
+        <properties>
+          <!--<property name="csi.ssl.keystore.location" value="c:/progetti/test_csi/resource/client.keystore" />-->
+          <!--<property name="csi.ssl.truststore.location" value="c:/progetti/test_csi/resource/client.truststore" />-->
+          <!-- <property name="csi.proxyhost" value="proxy.csi.it:80"/> -->
+          <!--<property name="csi.connection.timeout" value="30000" />-->
+        </properties>
+      </pluggable-pd>
+    </pluggable-pd-list>
+    <queue-manager url=""/>
+  </config>
+</porta-delegata>

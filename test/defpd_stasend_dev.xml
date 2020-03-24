@@ -1,0 +1,48 @@
+<porta-delegata name="stasend.stasend">
+  <services>
+  
+<service name="stasend" public-interface-class="it.csi.stacore.stasend.interfacecsi.stasend.StasendSrv" top-version="1.0.0">
+      <operations>
+		<operation name="sendMessage" type="asynch-call" since="1.0">
+          <param-list>
+			<param name="requestMessage" type="it.csi.stacore.stasend.dto.stasend.RequestMessage" />
+          <param name="datiMsg" type="it.csi.csi.util.DatiMessaggio" />
+          </param-list>
+          	<ret-val type="java.lang.String"/>
+        </operation>
+		<operation name="sendMessages" type="asynch-call" since="1.0">
+          <param-list>
+			<param name="requestMessages" type="it.csi.stacore.stasend.dto.stasend.RequestMessages" />
+          <param name="datiMsg" type="it.csi.csi.util.DatiMessaggio" />
+          </param-list>
+          	<ret-val type="java.lang.String"/>
+        </operation>
+      </operations>
+    </service>
+
+  </services>
+  <config>
+    <url-pa>**not used**</url-pa>
+    <pluggable-pd-list chooser-class="it.csi.csi.porte.FixedDelegateChooser">
+      <pluggable-pd
+        name="stasend"
+        class="it.csi.csi.porte.ejb20.PortaDelegataEJB"
+        url-pa="stasend.ejb.ApplStasendPA"
+        url-qm="stasend.ejb.ApplStasendQMGR">
+        <properties>
+          <property name="java.naming.provider.url" value="jnp://dev-jboss43cp09-044.self.csi.it:15400"/>
+          <!-- initial context factory per JBoss43 -->
+          <property name="java.naming.factory.initial" value="org.jnp.interfaces.NamingContextFactory" />
+          <property name="jnp.disableDiscovery" value="true" />
+        </properties>
+      </pluggable-pd>
+    </pluggable-pd-list>
+    <pre-function-handler-list>
+    	
+		</pre-function-handler-list>
+		<post-function-handler-list>
+		
+		</post-function-handler-list>
+    <queue-manager url=""/>
+  </config>
+</porta-delegata>

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+       					   http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-1.1.xsd">
+
+
+	<!-- CONFIGURAZIONE EMAIL -->
+
+	<bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+		
+		<!--  CSI -->
+		<property name="host" value="mailfarm.csi.it" />
+		<property name="javaMailProperties">
+			<props>
+				<prop key="mail.debug">true</prop>
+			</props>
+		</property>
+		
+		
+		
+	</bean>
+
+
+
+	<bean id="emailMessageProviderTarget" class="it.csi.stacore.stasend.business.stasend.integration.impl.EmailMessageProviderImpl">
+		<property name="mailSender" ref="mailSender" />
+	</bean>
+
+	<bean id="emailMessageProvider" class="org.springframework.aop.framework.ProxyFactoryBean">
+		<property name="proxyInterfaces"
+			value="it.csi.stacore.stasend.business.stasend.integration.MessageProvider" />
+		<property name="target" ref="emailMessageProviderTarget" />
+		<property name="interceptorNames">
+			<list>
+				<value>logInterceptor</value>
+				<value>paramInterceptor</value>
+			</list>
+		</property>
+	</bean>
+
+
+	<bean id="mockEmailMessageProviderTarget" parent="emailMessageProviderTarget"
+		class="it.csi.stacore.stasend.business.stasend.integration.impl.MockEmailMessageProviderImpl">
+
+	</bean>
+
+	<bean id="mockEmailMessageProvider" class="org.springframework.aop.framework.ProxyFactoryBean">
+		<property name="proxyInterfaces"
+			value="it.csi.stacore.stasend.business.stasend.integration.MessageProvider" />
+		<property name="target" ref="mockEmailMessageProviderTarget" />
+		<property name="interceptorNames">
+			<list>
+				<value>logInterceptor</value>
+				<value>paramInterceptor</value>
+			</list>
+		</property>
+	</bean>
+
+	<!-- SMS -->
+	<bean id="smsMessageProviderTarget" 
+			class="it.csi.stacore.stasend.business.stasend.integration.impl.SmsMessageProviderImpl">
+	
+		<property name="smsMessageAdapterImpl"  ref="smsMessageAdapterImpl" />
+		
+		<property name="urlGatewayOnline"           value="@@URL_GATEWAY_SMS_ONLINE@@" />
+		<property name="usernameOnline"             value="@@USERNAME_GATEWAY_SMS_ONLINE@@" />
+		<property name="passwordOnline"             value="@@PASSWORD_GATEWAY_SMS_ONLINE@@" />
+		<property name="codiceProgettoOnline"       value="@@CODICEPROGETTO_GATEWAY_SMS_ONLINE@@" />
+		
+		
+		<property name="urlGatewayBatch"           value="@@URL_GATEWAY_SMS_BATCH@@" />
+		<property name="usernameBatch"             value="@@USERNAME_GATEWAY_SMS_BATCH@@" />
+		<property name="passwordBatch"             value="@@PASSWORD_GATEWAY_SMS_BATCH@@" />
+		<property name="codiceProgettoBatch"       value="@@CODICEPROGETTO_GATEWAY_SMS_BATCH@@" />
+		
+		<property name="numeroMassimoSmsPerRichiesta"  value="100" />
+		
+		
+	</bean>
+
+
+	<bean id="smsMessageProvider" class="org.springframework.aop.framework.ProxyFactoryBean">
+		<property name="proxyInterfaces"
+			value="it.csi.stacore.stasend.business.stasend.integration.MessageProvider" />
+		<property name="target" ref="smsMessageProviderTarget" />
+		<property name="interceptorNames">
+			<list>
+				<value>logInterceptor</value>
+				<value>paramInterceptor</value>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="mockSmsMessageProviderTarget" parent="smsMessageProviderTarget"
+		class="it.csi.stacore.stasend.business.stasend.integration.impl.MockSmsMessageProviderImpl">
+	</bean>
+
+
+
+	<bean id="mockSmsMessageProvider" class="org.springframework.aop.framework.ProxyFactoryBean">
+		<property name="proxyInterfaces"
+			value="it.csi.stacore.stasend.business.stasend.integration.MessageProvider" />
+		<property name="target" ref="mockSmsMessageProviderTarget" />
+		<property name="interceptorNames">
+			<list>
+				<value>logInterceptor</value>
+				<value>paramInterceptor</value>
+			</list>
+		</property>
+	</bean>
+
+</beans>

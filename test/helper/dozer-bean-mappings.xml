@@ -1,0 +1,38 @@
+<mappings xmlns="http://dozer.sourceforge.net" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://dozer.sourceforge.net http://dozer.sourceforge.net/schema/beanmapping.xsd">
+
+	<mapping>
+	RICHIESTASMS, Message
+		<class-a>it.csi.stacore.stasend.business.stasend.integration.dto.richiesta.SMS</class-a>
+		<class-b>it.csi.stacore.stasend.dto.stasend.Message</class-b>
+		
+		<field>
+			<a>TELEFONO</a>
+			<b>recipient</b>
+		</field>
+		<!-- 
+		<field>
+			<a>descrizione</a>
+			<b>descrizione</b>
+		</field>
+		 -->
+		
+		<!-- 
+		<field>
+			<a>email</a>
+			<b>emailAddress</b>
+		</field>
+		<field-exclude>
+			<a>address</a>
+			<b>address</b>
+		</field-exclude>
+		-->
+	</mapping>
+	
+	
+	
+	
+	
+	
+</mappings>
+

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<deploy-descriptor 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:noNamespaceSchemaLocation="../../conf/deploy-descriptor.xsd">
+	<rilascio
+		ambiente="@rilascio.ambiente@"
+		cliente="@rilascio.cliente@"
+		istanza="@rilascio.istanza@"
+		unita-installazione="fpsend"
+		staging="false">
+		<prodotto codice="FPCOMMON" versione="1.0.0">
+			<descrizione>@prodotto.descrizione@</descrizione>
+		</prodotto>
+		<componente codice="FPSEND">
+			<descrizione>@componente.descrizione@</descrizione>
+		</componente>
+	</rilascio>
+	<lista-servizi>
+		<servizio nome="fpsend" versione-intf="1.0.0" versione-impl="1.0.0" tipo-servizio="A" tipo-erogazione="O">
+			<versione-retrocompatibile>true</versione-retrocompatibile>
+		</servizio>
+	</lista-servizi>
+	<lista-binding>
+	    <binding servizio="fpsend" versione="1.0.0" protocollo="CSI-java-jnp">
+			<endpoint>
+				<csi-endpoint pd-file="defpd_fpsend_CSI_java_jnp.xml">
+					<override-url>@fpcommon.fpsend.fpsend.pa.url@</override-url>
+				</csi-endpoint>
+			</endpoint>
+		</binding>
+	    <binding servizio="fpsend" versione="1.0.0" protocollo="CSI-http">
+			<endpoint>
+				<csi-endpoint pd-file="defpd_fpsend_CSI_http.xml">
+					<override-url>@fpcommon.fpsend.fpsend.pabr.server.prefix@/fpsendApplFpsendPabr/servlet/rpcrouter</override-url>
+				</csi-endpoint>
+			</endpoint>
+		</binding>
+	    <binding servizio="fpsend" versione="1.0.0" protocollo="WS-SOAP">
+			<endpoint>
+				<ws-endpoint wsdl="@fpcommon.fpsend.fpsend.wsfad.server.prefix@/fpsendApplFpsendWsfad/services/fpsendFpsend?wsdl">
+					<url>@fpcommon.fpsend.fpsend.wsfad.server.prefix@/fpsendApplFpsendWsfad/services/fpsendFpsend</url>
+				</ws-endpoint>
+			</endpoint>
+		</binding>
+	</lista-binding>
+</deploy-descriptor>

@@ -1,0 +1,9 @@
+<ivy-module version="1.0">
+    <info
+        organisation="csipiemonte"
+        module="fpsend-fpsend-client"
+        revision="1.0.0" />
+    <publications>
+        <artifact name="fpsend-fpsend-client-1.0.0" type="jar" />   
+    </publications>
+</ivy-module>

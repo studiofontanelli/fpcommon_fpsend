@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/dsp/stacore/!svn/ver/4010/stasend/trunk/docs/stasend/dtd
+END
+risposta_sms_reply_detail_none.dtd
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/dsp/stacore/!svn/ver/4010/stasend/trunk/docs/stasend/dtd/risposta_sms_reply_detail_none.dtd
+END
+richiesta_sms.dtd
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/dsp/stacore/!svn/ver/4010/stasend/trunk/docs/stasend/dtd/richiesta_sms.dtd
+END
+risposta_sms_reply_detail_errors_all.dtd
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/dsp/stacore/!svn/ver/4010/stasend/trunk/docs/stasend/dtd/risposta_sms_reply_detail_errors_all.dtd
+END

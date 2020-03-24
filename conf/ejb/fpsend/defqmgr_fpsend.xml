@@ -1,0 +1,22 @@
+<queue-manager-conf
+  listening-url="*not-used*" name="fpsend.PDD_QMGR" >
+  <jms-queue-jndi-props>
+<!-- la configurazione jndi del server jms e' implicita nella maggiorparte dei casi -->
+<!--    <prop name="java.naming.provider.url" value="t3://censerv1wls1.csi.it:7001" />-->
+<!--    <prop name="java.naming.factory.initial" value="weblogic.jndi.WLInitialContextFactory" />-->
+  </jms-queue-jndi-props>
+  <jms-queue-connection-factory jndi-name="/ConnectionFactory" />
+  <service-activator-config
+    activated-interface="it.csi.fpcommon.fpsend.interfacecsi.fpsend.FpsendSrv"
+    retry-delay="10000"
+    max-retry="10"
+    counter-name="FPSEND_COUNTER"
+  />
+  <!-- NOTA: il separatore nella PA NAME non deve essere '/' perche' il sistema
+       lo ricerca come '.' -->
+  <port-queue-map>
+    <!-- il nome della porta deve coincidere con il name nel pluggable-pd del client! -->
+    <map port-name="fpsend" 
+    	 queue-jndi-name="java:/queue/fpsend.jms.FpsendPAQueue" />
+  </port-queue-map>
+</queue-manager-conf>

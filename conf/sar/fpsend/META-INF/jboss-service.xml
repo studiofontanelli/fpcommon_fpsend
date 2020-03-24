@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<server>  
+  <mbean code="it.csi.fpcommon.fpsend.business.fpsend.spring.startup.LoadStartupService" name="it.csi.fpcommon.fpsend.business.fpsend.spring.startup:service=LoadStartup">
+    <attribute name="Message">Startup contesto spring</attribute>
+  </mbean>
+</server>

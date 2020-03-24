@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
+       					   http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.0.xsd"> 
+       					   
+
+	<!--PROTECTED REGION ID(R892259693) ENABLED START-->
+		<!-- Insert here your custom Spring Beans -->	
+		
+		<import resource="fpsendHelperContext.xml" />
+		<import resource="fpsendIntegrationContext.xml" />	
+		<import resource="fpsendAdapter-beans.xml" />	
+					
+	<!--PROTECTED REGION END-->
+	
+	
+	
+	<bean id="fpsendImpl" class="it.csi.fpcommon.fpsend.business.fpsend.FpsendImpl">			
+	<!--PROTECTED REGION ID(R-1247531676) ENABLED START-->
+			<!-- Insert here fpsend bean properties (Dao, customBeans, etc...) -->
+			<property name="messageSenderHelper" ref="messageSenderHelper" />
+			<property name="pecSenderHelper" ref="pecSenderHelper" />
+			<property name="pecHelper" ref="pecHelper" />
+	<!--PROTECTED REGION END-->
+	</bean>
+	
+	
+</beans>

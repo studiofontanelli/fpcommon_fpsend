@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<deployment xmlns="http://xml.apache.org/axis/wsdd/" xmlns:java="http://xml.apache.org/axis/wsdd/providers/java">
+ <globalConfiguration>
+  <parameter name="adminPassword" value="admin"/>
+  <parameter name="attachments.Directory" value="attachments"/>
+  <parameter name="attachments.implementation" value="org.apache.axis.attachments.AttachmentsImpl"/>
+  <parameter name="sendXsiTypes" value="true"/>
+  <parameter name="sendMultiRefs" value="true"/>
+  <parameter name="sendXMLDeclaration" value="true"/>
+  <parameter name="axis.sendMinimizedElements" value="true"/>
+  <requestFlow>
+   <handler type="java:org.apache.axis.handlers.JWSHandler">
+    <parameter name="scope" value="session"/>
+   </handler>
+   <handler type="java:org.apache.axis.handlers.JWSHandler">
+    <parameter name="scope" value="request"/>
+    <parameter name="extension" value=".jwr"/>
+   </handler>
+  </requestFlow>
+ </globalConfiguration>
+ <handler name="Authenticate" type="java:org.apache.axis.handlers.SimpleAuthenticationHandler"/>
+ <handler name="LocalResponder" type="java:org.apache.axis.transport.local.LocalResponder"/>
+ <handler name="URLMapper" type="java:org.apache.axis.handlers.http.URLMapper"/>
+ <service name="Version2" provider="java:RPC">
+  <parameter name="allowedMethods" value="getVersion"/>
+  <parameter name="className" value="org.apache.axis.Version"/>
+ </service>
+ <service name="AdminService" provider="java:MSG">
+  <parameter name="allowedMethods" value="AdminService"/>
+  <parameter name="enableRemoteAdmin" value="false"/>
+  <parameter name="className" value="org.apache.axis.utils.Admin"/>
+  <namespace>http://xml.apache.org/axis/wsdd/</namespace>
+ </service>
+
+ <service name="fpsendFpsend" provider="Handler"   >
+  <parameter name="wsdlPortType" value="fpsendFpsend" />
+  <parameter name="allowedMethods" value="*"/>
+  <parameter name="defPDResource" value="/defpdelegata_embedded_fpsend.xml"/>
+  <parameter name="className" value="it.csi.fpcommon.fpsend.interfacecsi.fpsend.FpsendSrv"/>
+  <parameter name="handlerClass" value="it.csi.csi.wrapper.jaxrpc.axis.PDProvider"/>
+  
+  <beanMapping languageSpecificType="java:it.csi.csi.wrapper.CSIException" qname="ns2:CSIException" xmlns:ns2="urn:fpsendFpsend"/>
+  <beanMapping languageSpecificType="java:it.csi.csi.wrapper.UserException" qname="ns3:UserException" xmlns:ns3="urn:fpsendFpsend"/>
+  <beanMapping languageSpecificType="java:it.csi.csi.wrapper.SystemException" qname="ns4:SystemException" xmlns:ns4="urn:fpsendFpsend"/>
+  <beanMapping languageSpecificType="java:it.csi.csi.wrapper.UnrecoverableException" qname="ns5:UnrecoverableException" xmlns:ns5="urn:fpsendFpsend"/>
+  <beanMapping languageSpecificType="java:it.csi.csi.wrapper.CommunicationException" qname="ns6:CommunicationException" xmlns:ns6="urn:fpsendFpsend"/>
+  <!-- mapping dell'oggetto DatiMessaggio utilizzato nelle chiamate asincrone -->
+  <beanMapping languageSpecificType="java:it.csi.csi.util.DatiMessaggio" qname="ns7:DatiMessaggio" xmlns:ns7="urn:fpsendFpsend"/>
+  <!-- mapping delle user defined entities -->
+  
+  <beanMapping languageSpecificType="java:it.csi.fpcommon.fpsend.dto.fpsend.Message" qname="ns10:Message" xmlns:ns10="urn:fpsendFpsend"/>
+  
+  <beanMapping languageSpecificType="java:it.csi.fpcommon.fpsend.dto.fpsend.Template" qname="ns10:Template" xmlns:ns10="urn:fpsendFpsend"/>
+  
+  <beanMapping languageSpecificType="java:it.csi.fpcommon.fpsend.dto.fpsend.PlaceHolder" qname="ns10:PlaceHolder" xmlns:ns10="urn:fpsendFpsend"/>
+  
+  <beanMapping languageSpecificType="java:it.csi.fpcommon.fpsend.dto.fpsend.RequestMessage" qname="ns10:RequestMessage" xmlns:ns10="urn:fpsendFpsend"/>
+  
+  <beanMapping languageSpecificType="java:it.csi.fpcommon.fpsend.dto.fpsend.RequestMessages" qname="ns10:RequestMessages" xmlns:ns10="urn:fpsendFpsend"/>
+  
+  <beanMapping languageSpecificType="java:it.csi.fpcommon.fpsend.dto.fpsend.Attachment" qname="ns10:Attachment" xmlns:ns10="urn:fpsendFpsend"/>
+  
+  <beanMapping languageSpecificType="java:it.csi.fpcommon.fpsend.dto.fpsend.ResponseMessage" qname="ns10:ResponseMessage" xmlns:ns10="urn:fpsendFpsend"/>
+  
+  <beanMapping languageSpecificType="java:it.csi.fpcommon.fpsend.dto.fpsend.RequestRecuperaPec" qname="ns10:RequestRecuperaPec" xmlns:ns10="urn:fpsendFpsend"/>
+  
+  <beanMapping languageSpecificType="java:it.csi.fpcommon.fpsend.dto.fpsend.ResponseRecuperaPec" qname="ns10:ResponseRecuperaPec" xmlns:ns10="urn:fpsendFpsend"/>
+  
+  <!-- mapping delle user defined exceptions -->
+  
+  <beanMapping languageSpecificType="java:it.csi.fpcommon.fpsend.exception.fpsend.SendMessageException" qname="ns10:SendMessageException" xmlns:ns10="urn:fpsendFpsend"/>
+  
+  <beanMapping languageSpecificType="java:it.csi.fpcommon.fpsend.exception.fpsend.RecuperaPecException" qname="ns10:RecuperaPecException" xmlns:ns10="urn:fpsendFpsend"/>
+  
+  
+ </service>
+
+ <service name="Version" provider="java:RPC">
+  <parameter name="allowedMethods" value="getVersion"/>
+  <parameter name="className" value="org.apache.axis.Version"/>
+ </service>
+ <transport name="http">
+  <requestFlow>
+   <handler type="URLMapper"/>
+   <handler type="java:org.apache.axis.handlers.http.HTTPAuthHandler"/>
+  </requestFlow>
+ </transport>
+ <transport name="local">
+  <responseFlow>
+   <handler type="LocalResponder"/>
+  </responseFlow>
+ </transport>
+</deployment>

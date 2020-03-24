@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<weblogic-ejb-jar
+  xmlns="http://www.bea.com/ns/weblogic/90" 
+  xmlns:j2ee="http://java.sun.com/xml/ns/j2ee" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xsi:schemaLocation="http://www.bea.com/ns/weblogic/90 http://www.bea.com/ns/weblogic/90/weblogic-ejb-jar.xsd">
+	<!--  
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		EJB che implementa il servizio
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	-->
+	<weblogic-enterprise-bean>
+		<ejb-name>FpsendBean</ejb-name>
+		<enable-call-by-reference>true</enable-call-by-reference>
+	</weblogic-enterprise-bean>
+
+	<!--  
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		Porta applicativa del servizio
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	-->
+	<weblogic-enterprise-bean>
+		<ejb-name>FpsendPA</ejb-name>
+		<enable-call-by-reference>true</enable-call-by-reference>
+		<jndi-name>fpsend.ejb.ApplFpsendPA</jndi-name>
+		<!--PROTECTED REGION ID(R279083404) ENABLED START-->
+		<!-- modificare il valore di timeout se necessario (non verra' sovrascritto nelle rigenerazioni -->
+		<remote-client-timeout>30</remote-client-timeout>
+		<!--PROTECTED REGION END-->
+	</weblogic-enterprise-bean>
+	
+	
+	
+	<!--  
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		Queue manager del servizio
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	-->
+	<weblogic-enterprise-bean>
+        <ejb-name>FpsendQMGR</ejb-name>
+        <stateless-session-descriptor/>
+        <resource-description>
+	        <res-ref-name>jdbc/counterDS</res-ref-name>
+    	    <jndi-name>fpsend/jdbc/CounterFpsendTxDS</jndi-name>
+        </resource-description>
+
+        <jndi-name>fpsend.ejb.ApplFpsendQMGR</jndi-name>
+    </weblogic-enterprise-bean>
+    
+    <!--  
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		Service activator del servizio
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	-->
+    <weblogic-enterprise-bean>
+        <ejb-name>FpsendLTR</ejb-name>
+		<message-driven-descriptor>
+		  <pool>
+			<max-beans-in-free-pool>1</max-beans-in-free-pool>
+			<initial-beans-in-free-pool>1</initial-beans-in-free-pool>
+		  </pool>
+		  <destination-jndi-name>java:/queue/fpsend.jms.FpsendPAQueue</destination-jndi-name>
+		  <connection-factory-jndi-name>java:/jms/QueueConnectionFactory</connection-factory-jndi-name>
+		</message-driven-descriptor>
+		<ejb-reference-description>
+			<ejb-ref-name>ejb/asynchMgr</ejb-ref-name>
+			<jndi-name>fpsend.ejb.ApplFpsendQMGR</jndi-name>
+		</ejb-reference-description>
+		<ejb-reference-description>
+			<ejb-ref-name>ejb/pa</ejb-ref-name>
+			<jndi-name>fpsend.ejb.ApplFpsendPA</jndi-name>
+		</ejb-reference-description>
+        <jndi-name>fpsend.ejb.ApplFpsendLTR</jndi-name>
+	</weblogic-enterprise-bean>
+	
+	
+	
+	
+</weblogic-ejb-jar>

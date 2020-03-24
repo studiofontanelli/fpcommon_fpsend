@@ -1,0 +1,945 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+        build.xml file per compilazione, rilascio e deploy. del
+
+        Per una lista completa dei tasks eseguibili usare l'argomento di
+        ant -projecthelp quando si richiama questo build.xml.
+
+-->
+
+<project name="fpsend" xmlns:ivy="antlib:fr.jayasoft.ivy.ant" default="default" basedir=".">
+	<description>Build file di progetto</description>
+
+	<echo message="Loading build properties..." />
+	<property file="buildfiles/build.properties"/>
+	<property file="buildfiles/build.locale.properties"  />
+	<property file="buildfiles/${target}.properties"/>	
+
+	<path id="library.ref">
+		<fileset dir="${lib}">
+			<include name="**/*.jar" />
+			<include name="**/*.zip" />
+		</fileset>
+	</path>
+
+	<path id="weblogic.ref">
+		<pathelement location="${application.server.jar}" />
+	</path>
+
+
+	<target name="default" description="Eseguire il build per 
+		l'environment specificato a linea di comando con -Dtarget=${target}
+		o per tutti gli environment (se non specificato).">
+
+		<condition property="first-call" value="distribution">
+			<not>
+				<equals arg1="${target}" arg2="$${target}" />
+			</not>
+		</condition>
+
+		<condition property="first-call" value="all-targets">
+			<equals arg1="${target}" arg2="$${target}" />
+		</condition>
+
+		<echo message="target: ${target}" />
+		<echo message="first-call: ${first-call}" />
+
+		<antcall target="clean-all" />
+		<antcall target="${first-call}" />
+	</target>
+
+
+
+	<!-- -->
+	<!-- ############################################################ -->
+	<!-- # preparazione artefatto per il deploy su repart           # --> 
+	<!-- # (in dist/${target})                                      # -->
+	<!-- ############################################################ -->
+	<target name="package-deployable-artifact" depends="environment-config, _package-csiclientlibs-jar">
+		<mkdir dir="dist/csipiemonte"/>
+
+		<!-- artefatto per il servizio fpsend -->
+		<mkdir dir="dist/csipiemonte/fpsend-fpsend-client/1.0.0"/>
+		<mkdir dir="dist/csipiemonte/fpsend-fpsend-client/1.0.0/lib/"/>
+		<copydir dest="dist/csipiemonte/fpsend-fpsend-client/1.0.0/lib" src="build/archives/${target}" includes="fpsend-fpsend-client-1.0.0.jar"></copydir>
+		<copy file="build/temp/artifactory/fpsend/ivy-fpsend-fpsend-client.xml" todir="dist/csipiemonte/fpsend-fpsend-client/1.0.0"></copy>
+
+		<zip destfile="dist/fpcommon-fpsend-artifacts.zip" basedir="dist" includes="csipiemonte/**">
+		</zip>
+	</target>
+
+
+	<target name="all-targets" description="Esegue il build per le varie distribuzioni in sequenza.">
+	<!--PROTECTED REGION ID(R-312021802) ENABLED START-->
+		<!-- inserire il richiamo dei build per gli ambienti previsti dal progetto -->
+		<antcall target="distribution">
+			<param name="target" value="dev" />
+		</antcall>
+
+		<antcall target="distribution">
+			<param name="target" value="tst-[cliente]" />
+		</antcall>
+
+		<antcall target="distribution">
+			<param name="target" value="coll-[cliente]" />
+		</antcall>
+
+		<antcall target="distribution">
+			<param name="target" value="prod-[cliente]" />
+		</antcall>
+	<!--PROTECTED REGION END-->
+	</target>
+
+
+	<target name="package-all" description="esegue il packaging di ogni componente del prodotto" >
+		<antcall target="package-ear" />
+	</target>
+
+	<target name="init" description="Inizializza lo script Ant.">
+		<tstamp />
+		<condition property="target" value="dev">
+			<equals arg1="${target}" arg2="$${target}" />
+		</condition>
+		<mkdir dir="${build}/classes" />
+		
+		<mkdir dir="${build}/temp/${target}/lib" />
+		<mkdir dir="${build}/archives/${target}" />
+		
+		<mkdir dir="${dist}/${target}" />
+		<mkdir dir="${build}/javadoc" />
+		<mkdir dir="${build}/jsp" />
+	</target>
+
+
+    
+	<target name="resolve-dependencies" description="carica le librerie dal repository remoto">
+		<ivy:configure file="buildfiles/ivyconf.xml" />
+		<ivy:resolve file="buildfiles/ivy.xml" />
+	</target>
+
+	<!-- caricamento delle dipendenze mediante Ivy 2.0.0
+	     in conformita' con le Linee Guida Build V05
+	 -->
+	<target name="load-dependencies" depends="resolve-dependencies"
+			description="Risolve le dipendenze esterne.">
+		<ivy:retrieve pattern="lib/[artifact].[type]" />
+	</target>
+
+
+    <!-- compilazione dei sorgenti java. N.B: le classi di "frontiera" devono
+         essere compilate con target JDK1.3 per permettere la fruibilita' del
+         servizio da parte di fruitori che utilizzano JRE anteriori all'1.5.
+     -->
+	<target name="compile-all" description="Compila tutti i sorgenti."
+		depends="init, load-dependencies" >
+
+		<echo message="===> Target: ${target}" />		
+		
+		<!-- compilazione dei sorgenti delle interfacce (target 1.3)-->
+		<javac srcdir="${src}/java" 
+			destdir="${build}/classes" 
+			optimize="on" 
+			deprecation="on"
+			compiler="modern"
+			target="1.3"
+			source="1.3"
+			includes="it/csi/**/interfacecsi/**,it.csi/**/dto/**,it/csi/**/exception/**"
+			>
+			<classpath refid="library.ref"/>
+		</javac>
+		
+		<!-- compilazione degli altri sorgenti -->
+		<javac srcdir="${src}/java" 
+			destdir="${build}/classes" 
+			optimize="on" 
+			deprecation="on"
+			compiler="modern"
+			debug="on" debuglevel="lines,vars,source"
+			excludes="it/csi/**/interfacescsi/**,it/csi/**/entity/**,it/csi/**/exception/**"
+			>
+			<classpath refid="library.ref"/>
+		</javac>
+
+		<!-- compilazione delle classi di test -->
+		<javac srcdir="${test}/java" 
+			destdir="${build}/classes" 
+			optimize="on" 
+			deprecation="on"
+			compiler="modern"
+			debug="on" debuglevel="lines,vars,source"
+			>
+			<classpath refid="library.ref"/>
+		</javac>
+		
+		<copy todir="${build}/classes">
+			<fileset dir="${src}/java" excludes="**/*.java*,**/*.jbx*"/>
+		</copy>
+		
+		<copy todir="${build}/classes">
+   			<fileset dir="${test}/java" excludes="**/*.java*,**/*.jbx*"/>
+		</copy>
+
+	</target>
+
+	<!-- creazione pacchetto classi/risorse comuni a tutti i servizi -->
+    <target name="_package-common-classes" depends="compile-all">
+    	<jar destfile="${build}/archives/${target}/fpsend-common.jar"
+			basedir="${build}/classes"
+			includes="it/csi/fpcommon/fpsend/business/**">
+			<exclude name="it/csi/fpcommon/fpsend/business/fpsend/**" />
+		</jar>
+    </target>
+    
+    <target name="_package-csiclientlibs-jar" depends="compile-all" 
+    description="costruisce tutti i jar delle librerie client di CSI per ogni servizio"
+    >
+       
+       <!-- costruzione delle librerie client per il servizio fpsend -->
+       <antcall target="_csiclientlib-jar">
+         <param name="service.name" value="fpsend" />
+         <param name="service.ver" value="1.0" />
+       </antcall>
+       
+    </target>
+    
+    <target name="_csiclientlib-jar" description="genera le librerie client di ciascun servizio">
+    	<!-- prende come parametro il codice servizio service.name e la versione service.ver (deve essere a 2 cifre!!!) -->
+    	<jar destfile="${build}/archives/${target}/fpsend-${service.name}-client-${service.ver}.0.jar"
+			basedir="${build}/classes"
+			includes="it/csi/fpcommon/fpsend/dto/${service.name}/**,
+			          it/csi/fpcommon/fpsend/exception/${service.name}/**,
+			          it/csi/fpcommon/fpsend/interfacecsi/${service.name}/**">
+		</jar>
+    </target>
+	
+
+	<target name="environment-config" description="Predispone le configurazioni dipendenti dall'ambiente.">
+		<copy todir="build/temp" overwrite="true">
+			<fileset file="${conf}/ear/*.xml" />
+		</copy>
+		
+		<copy todir="build/temp" overwrite="true">
+			<fileset file="${conf}/**" />
+		</copy>
+		
+		
+		
+		
+			
+	<if>
+ 		<equals arg1="${enableClustering}" arg2="true" />
+ 	<then>
+	    <replace dir="${build}/temp/ejb" token="@@@@CLUSTER_AWARE@@@@"  value="&lt;clustered&gt;True&lt;/clustered&gt;">
+		    <include name="**/jboss*.xml"/>
+  		</replace>	
+  	</then>	
+  	<else>
+  		<replace dir="${build}/temp/ejb" token="@@@@CLUSTER_AWARE@@@@"  value="">
+		    <include name="**/jboss*.xml"/>
+  		</replace>
+  	</else>
+  	</if>	
+
+		
+		
+		<!--PROTECTED REGION ID(R-500117444) ENABLED START-->
+		
+		
+			<echo message="jndi.mail.server		                     = ${jndi.mail.server} " />
+				
+				<!--
+				<echo message="mail.smtp.port		                     = ${mail.smtp.port} " />
+				<echo message="mail.smtp.host		                     = ${mail.smtp.host} " />
+				-->
+				
+				<echo message="url.gatewayonline.sms 		             = ${url.gatewayonline.sms} " />
+				<echo message="username.gatewayonline.sms		         = ${username.gatewayonline.sms} " />
+				<echo message="password.gatewayonline.sms		         = ${password.gatewayonline.sms} " />
+				<echo message="codiceProgetto.gatewayonline.sms		     = ${codiceProgetto.gatewayonline.sms} " />
+				
+				<echo message="url.gatewaybatch.sms 		             = ${url.gatewaybatch.sms} " />
+				<echo message="username.gatewaybatch.sms		         = ${username.gatewaybatch.sms} " />
+				<echo message="password.gatewaybatch.sms		         = ${password.gatewaybatch.sms} " />
+				<echo message="codiceProgetto.gatewaybatch.sms		     = ${codiceProgetto.gatewaybatch.sms} " />
+				
+				
+				<!--
+				<echo message="datasource.db.connection		     = ${datasource.db.connection} " />
+				<echo message="datasource.db.username		     = ${datasource.db.username} " />
+				-->
+				
+				<replace dir="${build}/temp/ejb" token="@@JNDI_MAIL_SERVER@@"  value="${jndi.mail.server}" >
+					<include name="**/fpsendIntegrationContext.xml"/>
+			  	</replace>
+				
+				<replace dir="${build}/temp/ejb" token="@@URL_GATEWAY_SMS_ONLINE@@"  value="${url.gatewayonline.sms}" >
+					<include name="**/fpsendIntegrationContext.xml"/>
+				</replace>
+				<replace dir="${build}/temp/ejb" token="@@USERNAME_GATEWAY_SMS_ONLINE@@"  value="${username.gatewayonline.sms}" >
+					<include name="**/fpsendIntegrationContext.xml"/>
+				</replace>
+				<replace dir="${build}/temp/ejb" token="@@PASSWORD_GATEWAY_SMS_ONLINE@@"  value="${password.gatewayonline.sms}" >
+					<include name="**/fpsendIntegrationContext.xml"/>
+				</replace>
+				<replace dir="${build}/temp/ejb" token="@@CODICEPROGETTO_GATEWAY_SMS_ONLINE@@"  value="${codiceProgetto.gatewayonline.sms}" >
+					<include name="**/fpsendIntegrationContext.xml"/>
+				</replace>
+				
+				<replace dir="${build}/temp/ejb" token="@@URL_GATEWAY_SMS_BATCH@@"  value="${url.gatewaybatch.sms}" >
+					<include name="**/fpsendIntegrationContext.xml"/>
+				</replace>
+				<replace dir="${build}/temp/ejb" token="@@USERNAME_GATEWAY_SMS_BATCH@@"  value="${username.gatewaybatch.sms}" >
+					<include name="**/fpsendIntegrationContext.xml"/>
+				</replace>
+				<replace dir="${build}/temp/ejb" token="@@PASSWORD_GATEWAY_SMS_BATCH@@"  value="${password.gatewaybatch.sms}" >
+					<include name="**/fpsendIntegrationContext.xml"/>
+				</replace>
+				<replace dir="${build}/temp/ejb" token="@@CODICEPROGETTO_GATEWAY_SMS_BATCH@@"  value="${codiceProgetto.gatewaybatch.sms}" >
+					<include name="**/fpsendIntegrationContext.xml"/>
+				</replace>
+				
+				
+				<!-- PEC -->
+				<replace dir="${build}/temp/ejb" token="@@pec.smtp.host@@"  value="${pec.smtp.host}" >
+					<include name="**/fpsendIntegrationContext.xml"/>
+				</replace>
+				<replace dir="${build}/temp/ejb" token="@@pec.imap.host@@"  value="${pec.imap.host}" >
+					<include name="**/fpsendHelperContext.xml"/>
+				</replace>
+				<replace dir="${build}/temp/ejb" token="@@pec.userId@@"  value="${pec.userId}" >
+					<include name="**/fpsendIntegrationContext.xml"/>
+					<include name="**/fpsendHelperContext.xml"/>
+				</replace>
+				<replace dir="${build}/temp/ejb" token="@@pec.password@@"  value="${pec.password}" >
+					<include name="**/fpsendIntegrationContext.xml"/>
+					<include name="**/fpsendHelperContext.xml"/>
+				</replace>
+		
+		
+		
+		<!--PROTECTED REGION END-->
+		
+	</target>
+
+	
+    
+    <target name="_package-all-soappabr-wars">
+    
+    	
+    	
+    	<!-- richiamo costruzione war soap pabr servizio fpsend -->
+    	<antcall target="_package-soappabr-war">
+    		<param name="component.name" value="fpsend"/>
+    		<param name="service.name" value="fpsend"/>
+    		<param name="binding.code" value="pabr"/>
+    		<param name="service.type" value="appl"/>
+    	</antcall>
+    	
+    	
+    
+    </target>
+    
+    <target name="_package-soappabr-war" >
+      <!-- prende in input i parametri component.name service.name binding.code -->
+      <mkdir dir="${temp}/${binding.code}/${service.name}/WEB-INF" />
+         
+		<war destfile="${build}/archives/${target}/${service.type}-${service.name}-${binding.code}.war"
+             webxml="${conf}/web/${binding.code}/${service.name}/WEB-INF/web.xml" 
+			 roundup= "false">
+			 <webinf file="${conf}/web/${binding.code}/${service.name}/WEB-INF/deploysoapejb*.xml" />
+			 <webinf file="${conf}/web/${binding.code}/${service.name}/WEB-INF/jboss-web.xml" />
+			 <webinf file="${conf}/web/${binding.code}/${service.name}/WEB-INF/weblogic.xml" />
+		</war>
+    </target>
+
+    <!-- costruisce i war dei wsfad -->
+    <target name="_package-all-wsfad-wars">
+    
+    	
+    	
+    	<!-- richiamo costruzione war wsfad servizio fpsend -->
+    	<antcall target="_package-wsfad-war">
+    		<param name="component.name" value="fpsend"/>
+    		<param name="service.name" value="fpsend"/>
+    		<param name="binding.code" value="wsfad"/>
+    		<param name="service.type" value="appl"/>
+    	</antcall>
+    	
+    	
+    
+    </target>
+    
+    <target name="_package-wsfad-war" >
+      <!-- prende in input i parametri component.name service.name binding.code -->
+      <mkdir dir="${temp}/${binding.code}/${service.name}/WEB-INF" />
+         
+		<war destfile="${build}/archives/${target}/${service.type}-${service.name}-${binding.code}.war"
+             webxml="${conf}/web/${binding.code}/${service.name}/WEB-INF/web.xml" 
+			 roundup= "false">
+			 <webinf file="${conf}/web/${binding.code}/${service.name}/WEB-INF/server-config.wsdd" />
+			 <webinf file="${conf}/web/${binding.code}/${service.name}/WEB-INF/jboss-web.xml" />
+			 <webinf file="${conf}/web/${binding.code}/${service.name}/WEB-INF/weblogic.xml" />
+			 <classes dir="${src}/web/${binding.code}/${service.name}" 
+				includes="defpdelegata_embedded*.xml" />
+			<lib dir="${lib}" includes="${wsfad.libs}" />
+			<fileset dir="${src}/web/${binding.code}/${service.name}" includes="**">			
+			</fileset>
+		</war>
+    </target>
+    
+    
+    <!-- costruisce tutti gli ejb jar relativi alle PA ejb (1 per servizio esposto)-->
+    <target name="_ejbpa-ejb-jars" depends="compile-all">
+    	
+    	<!-- binding ejb del servizio fpsend -->
+    	
+	
+        <!-- costruzione dell'ejb-jar del binding fpsend.ejbpa -->
+		<antcall target="_ejbpa-ejb-jar">
+    	    <param name="service.name" value="fpsend" />
+    		<param name="service.version" value="1.0" />
+    		<param name="binding.name" value="ejbpa" />
+    		<param name="service.type" value="appl" />
+    	</antcall>
+	
+
+
+	
+    </target>
+	
+	
+	<target name="_ejbpa-ejb-jar" description="Genera il jar per la PA ejb di servizi APPL o INFR" >
+	    <!-- prende come parametro il codice del servizio e del binding -->
+	    <!-- service.name -->
+	    <!-- service.version (serve per il rif. al client jar)-->
+	    <!-- service.type ("orch", "other-than-orch") -->
+	    <!-- binding.name -->
+		
+        
+        <if>
+ 			<equals arg1="${service.type}" arg2="orch" />
+ 		<then>
+			<jar jarfile="${build}/archives/${target}/${service.type}-${service.name}-${binding.name}.jar" >
+				<fileset dir="${build}/classes">
+					<include name="it/csi/*/fpsend/business/${service.name}/**"/>
+					<include name="it/csi/*/fpsend/integration/${service.name}/**"/>
+				</fileset>						
+
+				<fileset dir="${conf}/ejb/${service.name}">
+					<include name="defpa*"/>
+					<include name="checked_resources*.xml"/>
+					<include name="defqmgr_*" />
+				</fileset>
+			
+				<!-- config. svcflow -->
+				<fileset dir="${conf}/orchestrator/descriptor/${service.name}">
+					<include name="*.xml"/>
+				</fileset>
+			
+				<!-- risorse soggette a sostituzione -->
+				<fileset dir="${build}/temp/ejb/${service.name}">
+					<include name="**/*.xml"/>
+					<include name="**/*.properties"/>
+				</fileset>		
+								
+			    <metainf dir="${build}/temp/ejb/${service.name}/META-INF" >
+					<patternset id="all-xml" >
+						<include name="**/*.xml"/>
+					</patternset>
+				</metainf>	
+			</jar>
+		</then>
+		<else>
+			<jar jarfile="${build}/archives/${target}/${service.type}-${service.name}-${binding.name}.jar" >
+				<fileset dir="${build}/classes">
+					<include name="it/csi/*/fpsend/business/${service.name}/**"/>
+					<include name="it/csi/*/fpsend/integration/${service.name}/**"/>
+				</fileset>						
+						
+				<!-- risorse soggette a sostituzione -->
+				<fileset dir="${temp}/ejb/${service.name}">
+					<include name="*.xml"/>
+					<include name="*.properties"/>
+				</fileset>
+				
+				<metainf dir="${temp}/ejb/${service.name}/META-INF" >
+					<patternset id="all-xml" >
+						<include name="**/*.xml"/>
+					</patternset>
+				</metainf>
+				
+			</jar>		
+		</else>
+		</if>
+	</target>
+
+
+	<target name="_orch_ejbpa-ejb-jar" description="Genera il jar per la PA ejb di servizi ORCH" >
+	    <!-- prende come parametro il codice del servizio e del binding -->
+	    <!-- service.name -->
+	    <!-- service.version (serve per il rif. al client jar)-->
+	    <!-- binding.name -->
+		
+        
+		<jar jarfile="${build}/archives/${target}/orch-${service.name}${binding.name}ejb.jar" >
+			<fileset dir="${build}/classes">
+				<include name="it/csi/*/fpsend/business/${service.name}/**"/>
+				<include name="it/csi/*/fpsend/integration/${service.name}/**"/>
+			</fileset>						
+
+			<fileset dir="${conf}/ejb/${service.name}">
+				<include name="defpa*"/>
+				<include name="checked_resources*.xml"/>
+				<include name="defqmgr_*" />
+			</fileset>
+			
+			<!-- config. svcflow -->
+			<fileset dir="${conf}/orchestrator/descriptor/${service.name}">
+				<include name="*.xml"/>
+			</fileset>
+			
+			<metainf dir="${conf}/ejb/${service.name}/META-INF" >
+				<patternset id="all-xml" >
+					<include name="**/*.xml"/>
+				</patternset>
+			</metainf>
+		</jar>
+	</target>
+
+	<target name="integration-jar" description="Genera il jar per lo strato integration." >
+
+		<copy todir="${build}/classes/it/csi/${project}/integration/services/iride" file="${conf}/pd/iride/defPDIrideEJB.xml" />
+		<replace file="${build}/classes/it/csi/${project}/integration/services/iride/defPDIrideEJB.xml" token="@IRIDE_URL@" value="${iride.url.t3}" />
+			
+		<jar jarfile="${build}/archives/${target}/integration.jar">
+			<fileset dir="${build}/classes">
+				<include name="it/csi/${project}/integration/**"/>
+			</fileset>
+			
+			<manifest>
+					<attribute name="Class-Path" value="commons.jar lib/util-perf-1.0.0.jar"/>
+			</manifest>
+		</jar>
+	</target>
+
+    <!-- generazione del pacchetto sar per lo startuplistener di jboss-->
+	<target name="_package-fpsend-sar" description="genera il pacchetto sar">
+		<jar destfile="${build}/archives/${target}/fpsend-startup.sar"
+			basedir="${build}/classes"
+	    	includes="src/java/it/csi/fpcommon/fpsend/business/fpsend/spring/startup/**">
+	    	<fileset dir="${conf}/sar/fpsend">
+	    		<include name="**"/>	    							
+	    	</fileset>
+		</jar>
+	</target>
+    
+	
+	<target name="package-ear"  description="costruisce l&apos;ear"  
+		depends="compile-all, environment-config, _package-common-classes, _package-csiclientlibs-jar, _ejbpa-ejb-jars, _package-all-soappabr-wars, _package-all-wsfad-wars">
+
+		<copy todir="${temp}/${target}/lib">
+		    <!-- librerie infrastrutturali o client di servizi fruiti -->
+			<fileset dir="${lib}"
+				includes="${app.support.libs} ${svcflow.libs} ${extra.app.libs} ${cooptrace.libs} "
+				excludes="${excludes.libs}"
+			/>
+			<fileset dir="${build}/archives/${target}" includes="*client*.jar *common.jar" />
+		</copy>
+
+		<antcall target="_package-fpsend-sar"/>
+		<ear appxml="${temp}/application.xml" destfile="${build}/archives/${target}/fpsend.ear">
+			<fileset dir="${build}/archives/${target}" includes="*.jar,*.war, *.sar" excludes="*client*.jar,*-common.jar"/>
+			<fileset dir="${temp}/${target}" >
+				<include name="**/*"/>
+			</fileset>
+			<fileset dir="${temp}/ear" >
+				<include name="META-INF/*"/>
+			</fileset>
+			<manifest>
+				<attribute name="Built-By" value="${user.name}" />
+				<attribute name="Built-Date" value="${DSTAMP}" />
+				<attribute name="Target" value="${target}" />
+
+			</manifest>
+		</ear>
+	</target>
+
+
+	<target name="distribution" description="Costruisce il tar per la distribuzione." 
+		depends="package-all">
+
+		<echo>====== Creating distribution for ${target} ...</echo>
+		<echo>====== Basedir: ${build}/archives/${target} ... </echo>
+<!--PROTECTED REGION ID(R-996560038) ENABLED START-->
+		<!-- inserire qui eventuali statement antcall aggiuntivi da invocare
+		     nel processo di distribuzione del tar -->
+<!--PROTECTED REGION END-->
+
+		<!-- Configurazione del registry -->
+		<antcall target="_configure-registry"/>
+
+		<!-- creazione pacchetto distribution -->
+		<tar tarfile="${dist}/${target}/${project}-${version}.tar" 
+	         basedir="${build}/archives/${target}"
+	         includes="*.ear,*.zip" >
+			<tarfileset dir="buildfiles">
+				<include name="readme.txt"/>
+				<!--PROTECTED REGION ID(R-248805162) ENABLED START-->
+				<!-- inserire qui eventuali statement per includere oggetti extra nel tar -->
+				<!--PROTECTED REGION END-->
+			</tarfileset>
+			<tarfileset dir="${temp}/tar">
+				<include name="readme.txt"/>
+				<!--PROTECTED REGION ID(R-2023353813) ENABLED START-->
+				<!-- inserire qui eventuali statement per includere oggetti extra nel tar -->
+				<!--PROTECTED REGION END-->
+			</tarfileset>
+		</tar>
+
+		<delete>
+			<fileset dir="${dist}/${target}" excludes="**/*.tar" />
+		</delete>
+
+	</target>
+
+
+	
+	<!-- clean targets -->
+	
+	<target name="clean-all"
+	    	description="Rimuove tutte le cartelle temporanee."
+    	depends="clean-archives, clean-cache, clean-classes, clean-dist, clean-javadoc, clean-temp"/>
+
+	<target name="clean-cache"
+	    	description="Rimuove la cartella di cache di Ivy e la lib.">
+
+		<delete dir="${build}/cache" />
+		<delete dir="lib" />
+
+	</target>
+
+	<target name="clean-temp"
+    		description="Rimuove la cartella dei files temporanei di build.">
+
+		<delete dir="${temp}" />
+
+	</target>
+
+
+	<target name="clean-archives"
+	    	description="Rimuove la cartella degli archivi (war, ear, ...).">
+
+		<delete dir="${build}/archives"/>
+
+	</target>
+
+	<target name="clean-dist"
+	    	description="Rimuove la cartella delle distribuzioni.">
+
+		<delete dir="${dist}"/>
+
+	</target>
+
+
+
+	<target name="clean-classes"
+	    	description="Rimuove la cartella dei sorgenti compilati.">
+
+		<delete dir="${build}/classes"/>
+
+	</target>
+
+
+	<target name="clean-javadoc"
+			description="Rimuove la cartella temporanea dei javadoc.">
+
+		<delete dir="${build}/javadoc"/>
+
+	</target>
+
+
+	
+
+	<target name="_clean-web-inf"
+			description="Rimuove il contenuto di lib e classes della web application (per run locali).">
+
+		<delete dir="${web}/WEB-INF/classes" />
+		<delete dir="${web}/WEB-INF/lib" />
+
+	</target>
+
+
+	<!-- imported tasks from other files -->
+
+	<target name="javadoc" depends="init"
+    		description="Genera la documentazione javadoc.">
+
+		<ant antfile="buildfiles/build.javadoc.xml" target="javadoc"/>
+
+	</target>
+
+
+	<!--<target name="_copy-to-web-inf"
+			description="Copia le classi e la lib sotto WEB-INF (per run locali)."
+                        depends="_clean-web-inf, compile-all">
+
+		<copy todir="${web}/web/samplecsi/WEB-INF/classes">
+			<fileset dir="${build}/classes">
+				<include name="**/*"/>
+			</fileset>
+		</copy>
+
+		<copy todir="${src}/web/samplecsi/WEB-INF/lib">
+			<fileset dir="${lib}">
+				<exclude name="weblogic*.jar"/>
+			</fileset>
+		</copy>
+
+	</target>-->
+
+
+	<target name="about" description="Visualizza l'elenco dei target pubblici dello script." >
+		<loadproperties srcfile="buildfiles/build.properties" />
+		<loadfile property="about" srcfile="buildfiles/about.txt" />
+		<echo message="${about}" />
+	</target>
+
+	<target name="about-custom" description="Visualizza l'elenco di tutti i target, pubblici e privati (equivalente a 'ant -projecthelp')">
+		<loadproperties srcfile="buildfiles/build.properties" />
+		<loadfile property="about-custom" srcfile="buildfiles/about-custom.txt" />
+		<echo message="${about-custom}" />
+		<java classname="org.apache.tools.ant.Main">
+			<arg value="-projecthelp" />
+		</java>
+	</target>
+
+	<target name="show-vars" depends="init"
+	          description="Visualizza tutte le variabili impostate nei file di properties e/o da linea di comando">
+		<echo message="*****************************************"/>
+		<echo message="********  ${project} environment  *******" />
+		<echo message="*****************************************"/>
+		<echoproperties />
+		<echo />
+		<echo />
+		<echo message="*****************************************"/>
+		<echo message="********    java properties      *******" />
+		<echo message="*****************************************"/>
+		<echoproperties prefix="java."/>
+
+	</target>
+
+	<target name="__download-libs">
+		<delete dir="lib" />
+		<antcall target="load-dependencies" />
+	</target>
+
+
+	<!-- Configurazione registry -->
+	<target name="_configure-registry">
+		<!-- sostituisce le variabili -->
+		<antcall target="_replace-registry-vars" />
+		
+		<!-- REGISTRY -->		
+		<zip destfile="${build}/archives/${target}/${project}-reg-${version}.zip">
+			<zipfileset dir="${temp}/registry">
+				<include name="*/**"/>
+			</zipfileset>
+		</zip>
+
+		<!-- DIAG -->
+		<zip destfile="${build}/archives/${target}/diag-${project}-${version}.zip">
+			<zipfileset dir="${temp}/diag">
+				<include name="**/*.properties"/>
+			</zipfileset>
+		</zip>
+
+		<!-- MONIT -->
+		<zip destfile="${build}/archives/${target}/monit-${project}-${version}.zip">
+			<zipfileset dir="${temp}/monit">
+				<include name="**/*.properties"/>
+			</zipfileset>
+		</zip>
+	</target>
+
+	<target name="_replace-registry-vars">
+		<!-- REGISTRY -->
+		<replace dir="${temp}/registry">
+			<replacefilter token="@rilascio.ambiente@" value="${rilascio.ambiente}"/>
+			<replacefilter token="@rilascio.cliente@" value="${rilascio.cliente}"/>
+			<replacefilter token="@rilascio.istanza@" value="${rilascio.istanza}"/>
+			<replacefilter token="@prodotto.descrizione@" value="${prodotto.descrizione}"/>
+			<replacefilter token="@componente.descrizione@" value="${componente.descrizione}"/>
+			<replacefilter token="@fpcommon.fpsend.fpsend.pa.url@" value="${fpcommon.fpsend.fpsend.pa.url}"/>
+			<replacefilter token="@fpcommon.fpsend.fpsend.pabr.server.prefix@" value="${fpcommon.fpsend.fpsend.pabr.server.prefix}"/>
+			<replacefilter token="@fpcommon.fpsend.fpsend.wsfad.server.prefix@" value="${fpcommon.fpsend.fpsend.wsfad.server.prefix}"/>
+		</replace>	
+
+		<!-- DIAG -->
+		<replace dir="${temp}/diag">
+			<replacefilter token="@rilascio.ambiente@" value="${rilascio.ambiente}"/>
+			<replacefilter token="@rilascio.cliente@" value="${rilascio.cliente}"/>
+			<replacefilter token="@rilascio.istanza@" value="${rilascio.istanza}"/>
+		</replace>
+
+		<!-- MONIT -->
+		<replace dir="${temp}/monit">
+			<replacefilter token="@rilascio.ambiente@" value="${rilascio.ambiente}"/>
+			<replacefilter token="@rilascio.cliente@" value="${rilascio.cliente}"/>
+			<replacefilter token="@rilascio.istanza@" value="${rilascio.istanza}"/>
+		</replace>
+	</target>
+
+
+    <taskdef resource="net/sf/antcontrib/antlib.xml"/>
+
+
+    <!--PROTECTED REGION ID(R1351629124) ENABLED START-->
+    
+	
+	<target name="_deploy-jboss" description="deploy server jboss locale" depends="distribution">
+			<echo message="Deploy ${build}/archives/${target}/fpsend.ear  su JBoss " />
+			<tstamp>
+				<format property="TODAY_IT" pattern="dd/MM/yyyy hh:mm:ss" locale="it"/>
+			</tstamp>
+			<copy file="${build}/archives/${target}/fpsend.ear" todir="${jboss.deploy.dir}"/>
+				
+			<echo message="${build}/archives/${target}/fpsend.ear deployed in date  ${TODAY_IT}" />
+		</target>
+			
+		<target name="_stop-remote-jboss" description="comando remoto: Stop JBoss" >
+			<echo message="remote.jboss.user..............=  ${remote.jboss.user}" />
+			<echo message="remote.jboss.pwd...............=  ${remote.jboss.pwd}" />
+			<echo message="remote.jboss.host..............=  ${remote.jboss.host}" />
+			<echo message="remote.jboss.path..............=  ${remote.jboss.path}" />
+				
+			<echo message="eseguiamo comandi via ssh" />	
+			<sshexec 
+				host="${remote.jboss.host}" 
+				username="${remote.jboss.user}"
+				password="${remote.jboss.pwd}"
+				trust="true"
+				usepty="true"
+				command="${remote.jboss.command} ${remote.jboss.instance} ${remote.jboss.node} stop" />
+		</target>
+
+		<target name="_start-remote-jboss" description="comando remoto: Start JBoss" >
+			<echo message="remote.jboss.user..............=  ${remote.jboss.user}" />
+			<echo message="remote.jboss.pwd...............=  ${remote.jboss.pwd}" />
+			<echo message="remote.jboss.host..............=  ${remote.jboss.host}" />
+			<echo message="remote.jboss.path..............=  ${remote.jboss.path}" />
+					
+			<echo message="eseguiamo comandi via ssh" />	
+			<sshexec 
+				host="${remote.jboss.host}" 
+				username="${remote.jboss.user}"
+				password="${remote.jboss.pwd}"
+				trust="true"
+				usepty="true"
+				command="${remote.jboss.command} ${remote.jboss.instance} ${remote.jboss.node} start" />
+		</target>
+
+		<target name="_deploy-remote-jboss" description="deploy server jboss remoto" depends="distribution, _stop-remote-jboss" >
+			<echo message="Deploy ${build}/archives/${target}/fpsend.ear  su JBoss " />
+			<echo>TARGET  ${target} </echo>
+			<loadproperties srcFile="buildfiles/${target}.properties" />
+						
+			<tstamp>
+				<format property="TODAY_IT" pattern="dd/MM/yyyy hh:mm:ss" locale="it"/>
+			</tstamp>
+						
+			<echo message="remote.jboss.user..............=  ${remote.jboss.user}" />
+			<echo message="remote.jboss.pwd...............=  ${remote.jboss.pwd}" />
+			<echo message="remote.jboss.host..............=  ${remote.jboss.host}" />
+			<echo message="remote.jboss.path..............=  ${remote.jboss.path}" />
+			<echo message="file...........................=  ${build}/archives/${target}/fpsend.ear "/>
+						
+			<!--deploy --> 
+						
+			<scp 
+				todir="${remote.jboss.user}:${remote.jboss.pwd}@${remote.jboss.host}:${remote.jboss.path}" 
+				file="${build}/archives/${target}/fpsend.ear"
+				trust="true">
+			</scp>
+			<antcall target="_start-remote-jboss"></antcall>
+				
+		</target>  
+		
+		
+		<target name="_hot_deploy-remote-jboss" description="deploy server jboss remoto" depends="_clean, distribution" >
+					<echo message="Deploy ${build}/archives/${target}/fpsend.ear  su JBoss " />
+					<echo>TARGET  ${target} </echo>
+					<loadproperties srcFile="buildfiles/${target}.properties" />
+								
+					<tstamp>
+						<format property="TODAY_IT" pattern="dd/MM/yyyy hh:mm:ss" locale="it"/>
+					</tstamp>
+								
+					<echo message="remote.jboss.user..............=  ${remote.jboss.user}" />
+					<echo message="remote.jboss.pwd...............=  ${remote.jboss.pwd}" />
+					<echo message="remote.jboss.host..............=  ${remote.jboss.host}" />
+					<echo message="remote.jboss.path..............=  ${remote.jboss.path}" />
+					<echo message="remote.jboss.path.upload.......=  ${remote.jboss.path.upload}" />
+					<echo message="file...........................=  ${build}/archives/${target}/fpsend.ear "/>
+								
+					<!--deploy --> 
+								
+					<scp 
+						todir="${remote.jboss.user}:${remote.jboss.pwd}@${remote.jboss.host}:${remote.jboss.path.upload}" 
+						file="${build}/archives/${target}/fpsend.ear"
+						trust="true">
+					</scp>
+					
+					<!-- muovo il file dalla dir di upload alla farm  -->
+					<sshexec 
+						host="${remote.jboss.host}" 
+						username="${remote.jboss.user}"
+						password="${remote.jboss.pwd}"
+						trust="true"
+						usepty="true"
+						command="mv ${remote.jboss.path.upload}/fpsend.ear ${remote.jboss.path}" />
+					
+						
+				</target>  
+			
+			<target name="_clean" description="pulizia prima del deploy" depends="clean-classes, clean-dist, clean-temp" >
+				<echo message="cleaning before deploy " />
+			</target>  
+		
+		
+		<target name="_jaxb-compiler" depends="init">
+			
+			
+			<!-- JAXB -->
+			<taskdef name="xjc" classname="com.sun.tools.xjc.XJCTask">
+				<classpath refid="library.ref" />
+			</taskdef>
+			
+			<xjc package="it.csi.fpcommon.fpsend.business.fpsend.integration.dto.richiesta" 
+					destdir="${src}/java"
+				    description="Richiesta Invio SMS"
+					> 
+				<arg value="-dtd" />
+				<schema dir="docs/fpsend/dtd" includes="richiesta_sms.dtd" />
+			</xjc>	
+			
+			
+			<xjc package="it.csi.fpcommon.fpsend.business.fpsend.integration.dto.risposta.nodetail" 
+					destdir="${src}/java"
+					description="Risposta Reply detail NONE"
+					> 
+				<arg value="-dtd" />
+				<schema dir="docs/fpsend/dtd" includes="risposta_sms_reply_detail_none.dtd" />
+			</xjc>	
+			
+			<xjc package="it.csi.fpcommon.fpsend.business.fpsend.integration.dto.risposta.detail" 
+					destdir="${src}/java"
+					description="Risposta Reply detail ERRORS/NONE"
+				> 
+				<arg value="-dtd" />
+				<schema dir="docs/fpsend/dtd" includes="risposta_sms_reply_detail_errors_all.dtd" />
+			</xjc>
+		</target>
+	
+    <!--PROTECTED REGION END-->
+</project>

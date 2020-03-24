@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<!-- deve essere inserito nella directory 
+    /appserv/bea/beahome/beaConfigManaged/config/<dominio> -->
+<log4j:configuration debug="true" xmlns:log4j="http://jakarta.apache.org/log4j/">
+	<appender name="ASYNC" class="org.apache.log4j.AsyncAppender">
+        	<param name="Blocking" value="false"/>
+		<param name="BufferSize" value="1000" />
+		<appender-ref ref="JMSAppender" />
+	</appender>
+	<appender name="JMSAppender" class="it.csi.util.log4jext.integration.JMSQueueAppender">
+        	<param name="Threshold" value="DEBUG" />
+		<param name="InitialContextFactory" value="weblogic.jndi.WLInitialContextFactory" />
+		<param name="ProviderUrl" value="@URL_CCOPTRACE@" />
+		<param name="QueueConnectionFactoryBindingName" value="jms/cooptraceCF" />
+		<param name="QueueBindingName" value="jms/cooptraceDQ" />
+       </appender>
+        
+           <logger name="fpsend.jmsAppender" additivity="false">
+              <level value="INFO" />
+              <appender-ref ref="ASYNC" />
+       </logger>
+</log4j:configuration>

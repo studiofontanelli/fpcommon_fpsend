@@ -1,0 +1,68 @@
+<porta-delegata name="fpsend.fpsend">
+	<services>
+<service name="fpsend"
+         public-interface-class="it.csi.fpcommon.fpsend.interfacecsi.fpsend.FpsendSrv" 
+         top-version="1.0.0">
+	<operations>
+<operation name="sendMessage" type="asynch-call" since="1.0.0">
+	<param-list>
+<param name="requestMessage" type="it.csi.fpcommon.fpsend.dto.fpsend.RequestMessage" />
+		<param name="datiMsg" type="it.csi.csi.util.DatiMessaggio" />
+	</param-list>
+	<ret-val type="java.lang.String" />
+</operation>
+<operation name="sendMessages" type="asynch-call" since="1.0.0">
+	<param-list>
+<param name="requestMessages" type="it.csi.fpcommon.fpsend.dto.fpsend.RequestMessages" />
+		<param name="datiMsg" type="it.csi.csi.util.DatiMessaggio" />
+	</param-list>
+	<ret-val type="java.lang.String" />
+</operation>
+<operation name="sendPec" type="synch-call" since="1.0.0">
+	<param-list>
+<param name="requestMessage" type="it.csi.fpcommon.fpsend.dto.fpsend.RequestMessage" />
+	</param-list>
+	<ret-val type="it.csi.fpcommon.fpsend.dto.fpsend.ResponseMessage" />
+</operation>
+<operation name="recuperaPec" type="synch-call" since="1.0.0">
+	<param-list>
+<param name="request" type="it.csi.fpcommon.fpsend.dto.fpsend.RequestRecuperaPec" />
+	</param-list>
+	<ret-val type="it.csi.fpcommon.fpsend.dto.fpsend.ResponseRecuperaPec" />
+</operation>
+		<!-- operazione per monitoraggio -->
+		<operation name="testResources" type="synch-call">
+			<param-list>
+			</param-list>
+			<ret-val type="boolean"/>
+		</operation>
+		<!-- operazioni per diagnostica -->
+		<operation name="selfCheck" type="synch-call">
+			<param-list>
+				<param name="alreadyCalled" type="it.csi.coopdiag.api.CalledResource[]"/>
+			</param-list>
+			<ret-val type="it.csi.coopdiag.api.InvocationNode"/>
+		</operation>
+		<operation name="hasSelfCheck" type="synch-call">
+			<param-list>
+			</param-list>
+			<ret-val type="boolean"/>
+		</operation>
+	</operations>
+</service>
+	</services>
+	<config>
+		<url-pa>**not used**</url-pa>
+		<pluggable-pd-list chooser-class="it.csi.csi.porte.FixedDelegateChooser">
+			<pluggable-pd name="fpsend"
+			              class="it.csi.csi.porte.ejb20.PortaDelegataEJB"
+			              url-pa="fpsend.ejb.ApplFpsendPA"
+			              url-qm="fpsend.ejb.ApplFpsendQMGR">
+				<properties>
+					<property name="java.naming.provider.url" value="@fpcommon.fpsend.fpsend.pa.url@"/>
+				</properties>
+			</pluggable-pd>
+		</pluggable-pd-list>
+		<queue-manager url=""/>
+	</config>
+</porta-delegata>
